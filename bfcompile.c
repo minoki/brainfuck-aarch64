@@ -176,6 +176,7 @@ int main(int argc, char *argv[]) {
     }
     fputs("\tldr x19, [sp], #16\n", out); // restore x19
     fputs("\tldp x29, x30, [sp], #16\n", out); // restore x29, x30
+    fputs("\tmov w0, #0\n", out);
     fputs("\tret\n", out);
     fclose(out);
 }
