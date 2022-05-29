@@ -56,10 +56,17 @@ int main(int argc, char *argv[]) {
     }
     fclose(f);
     FILE *out = fopen("out.s", "w");
+#if defined(__APPLE__)
     const char *ARRAY_sym = "_ARRAY";
     const char *main_sym = "_main";
     const char *getchar_sym = "_getchar";
     const char *putchar_sym = "_putchar";
+#else
+    const char *ARRAY_sym = "ARRAY";
+    const char *main_sym = "main";
+    const char *getchar_sym = "getchar";
+    const char *putchar_sym = "putchar";
+#endif
     fputs("\t.data\n", out);
     fprintf(out, "%s:\n", ARRAY_sym);
     fputs("\t.zero 65536\n", out);
@@ -71,8 +78,13 @@ int main(int argc, char *argv[]) {
     fputs("\tstr x19, [sp, #-16]!\n", out); // save x19
     fputs("\tadd x29, sp, #32\n", out); // set frame pointer
     // ptr = x19 (callee save)
+#if defined(__APPLE__)
     fprintf(out, "\tadrp x19, %s@PAGE\n", ARRAY_sym);
     fprintf(out, "\tadd x19, x19, %s@PAGEOFF\n", ARRAY_sym);
+#else
+    fprintf(out, "\tadrp x19, %s\n", ARRAY_sym);
+    fprintf(out, "\tadd x19, x19, :lo12:%s\n", ARRAY_sym);
+#endif
     char *ip = program;
     int *stack = NULL;
     size_t stacklen = 0;
