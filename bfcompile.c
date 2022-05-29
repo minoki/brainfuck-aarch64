@@ -92,21 +92,53 @@ int main(int argc, char *argv[]) {
     while (*ip != '\0') {
         switch (*ip++) {
         case '>':
-            fputs("\tadd x19, x19, #1\n", out); // ++ptr
-            break;
+            {
+                int n = 1;
+                while (*ip == '>' && n < 4095) {
+                    ++n;
+                    ++ip;
+                }
+                assert(n <= 4095);
+                fprintf(out, "\tadd x19, x19, #%d\n", n); // ptr += n
+                break;
+            }
         case '<':
-            fputs("\tsub x19, x19, #1\n", out); // --ptr
-            break;
+            {
+                int n = 1;
+                while (*ip == '<' && n < 4095) {
+                    ++n;
+                    ++ip;
+                }
+                assert(n <= 4095);
+                fprintf(out, "\tsub x19, x19, #%d\n", n); // ptr -= n
+                break;
+            }
         case '+':
-            fputs("\tldrb w0, [x19]\n", out); // w0 = *ptr
-            fputs("\tadd w0, w0, #1\n", out); // ++w0
-            fputs("\tstrb w0, [x19]\n", out); // *ptr = w0
-            break;
+            {
+                int n = 1;
+                while (*ip == '+' && n < 4095) {
+                    ++n;
+                    ++ip;
+                }
+                assert(n <= 4095);
+                fputs("\tldrb w0, [x19]\n", out); // w0 = *ptr
+                fprintf(out, "\tadd w0, w0, #%d\n", n); // w0 += n
+                fputs("\tstrb w0, [x19]\n", out); // *ptr = w0
+                break;
+            }
         case '-':
-            fputs("\tldrb w0, [x19]\n", out); // w0 = *ptr
-            fputs("\tsub w0, w0, #1\n", out); // --w0
-            fputs("\tstrb w0, [x19]\n", out); // *ptr = w0
-            break;
+            {
+                int n = 1;
+                while (*ip == '-' && n < 4095) {
+                    ++n;
+                    ++ip;
+                }
+                assert(n <= 4095);
+                fputs("\tldrb w0, [x19]\n", out); // w0 = *ptr
+                fprintf(out, "\tsub w0, w0, #%d\n", n); // w0 -= n
+                fputs("\tstrb w0, [x19]\n", out); // *ptr = w0
+                break;
+            }
         case '.':
             fputs("\tldrb w0, [x19]\n", out); // w0 = *ptr
             fprintf(out, "\tbl %s\n", putchar_sym);
