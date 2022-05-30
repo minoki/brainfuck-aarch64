@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
 #endif
     fputs("\t.data\n", out);
     fprintf(out, "%s:\n", ARRAY_sym);
-    fputs("\t.zero 65536\n", out);
+    fputs("\t.zero 67108864\n", out);
     fputs("\t.text\n", out);
     fprintf(out, "\t.globl %s\n", main_sym);
     fputs("\t.align 2\n", out); // 4-byte align
