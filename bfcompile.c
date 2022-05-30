@@ -155,7 +155,9 @@ int main(int argc, char *argv[]) {
                 stack[stacklen - 1] = label;
                 fprintf(out, "L%d_start:\n", label);
                 fputs("\tldrb w0, [x19]\n", out);
-                fprintf(out, "\tcbz w0, L%d_end\n", label);
+                fprintf(out, "\tcbnz w0, L%d_body\n", label);
+                fprintf(out, "\tb L%d_end\n", label);
+                fprintf(out, "L%d_body:\n", label);
                 break;
             }
         case ']':
