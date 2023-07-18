@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
+#include <inttypes.h>
 
 int main(int argc, char *argv[]) {
     if (argc <= 1) {
@@ -93,24 +94,48 @@ int main(int argc, char *argv[]) {
         switch (*ip++) {
         case '>':
             {
-                int n = 1;
-                while (*ip == '>' && n < 4095) {
+                int64_t n = 1;
+                while (*ip == '>' && n < 0xffffffff) {
                     ++n;
                     ++ip;
                 }
-                assert(n <= 4095);
-                fprintf(out, "\tadd x19, x19, #%d\n", n); // ptr += n
+                if (n <= 0xffffff) {
+                    // 24-bit immediate
+                    if ((n & 4095) != 0) {
+                        fprintf(out, "\tadd x19, x19, #%" PRId64 "\n", n & 4095); // ptr += <lower 12-bit of n>
+                    }
+                    if ((n >> 12) != 0) {
+                        fprintf(out, "\tadd x19, x19, #%" PRId64 ", lsl #12\n", n >> 12); // ptr += <higher 12-bit of n>
+                    }
+                } else {
+                    // 32-bit immediate
+                    fprintf(out, "\tmovz x0, #%" PRId64 "\n", n & 0xffff);
+                    fprintf(out, "\tmovk x0, #%" PRId64 ", lsl #16\n", n >> 16);
+                    fputs("\tadd x19, x19, x0\n", out); // ptr += n
+                }
                 break;
             }
         case '<':
             {
-                int n = 1;
-                while (*ip == '<' && n < 4095) {
+                int64_t n = 1;
+                while (*ip == '<' && n < 0xffffffff) {
                     ++n;
                     ++ip;
                 }
-                assert(n <= 4095);
-                fprintf(out, "\tsub x19, x19, #%d\n", n); // ptr -= n
+                if (n <= 0xffffff) {
+                    // 24-bit immediate
+                    if ((n & 4095) != 0) {
+                        fprintf(out, "\tsub x19, x19, #%" PRId64 "\n", n & 4095); // ptr -= <lower 12-bit of n>
+                    }
+                    if ((n >> 12) != 0) {
+                        fprintf(out, "\tsub x19, x19, #%" PRId64 ", lsl #12\n", n >> 12); // ptr -= <higher 12-bit of n>
+                    }
+                } else {
+                    // 32-bit immediate
+                    fprintf(out, "\tmovz x0, #%" PRId64 "\n", n & 0xffff);
+                    fprintf(out, "\tmovk x0, #%" PRId64 ", lsl #16\n", n >> 16);
+                    fputs("\tsub x19, x19, x0\n", out); // ptr -= n
+                }
                 break;
             }
         case '+':
